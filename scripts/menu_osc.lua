@@ -1,12 +1,14 @@
 -- 
 -- menu_osc
+-- https://github.com/cliu12/MPV-Plugins
 --
 -- Got the ideas from multiple plugins, menu.lua, playlistmanager.lua and context.lua,
 -- create this on screen menu
 --
 -- Updated by Chao Liu
 -- 01/07/2023 initial release
---
+-- 
+-- ASS tag reference
 -- http://www.aegisub.org/ un-accessible
 -- https://aegi.vmoe.info/docs/3.1/ASS_Tags/
 --
@@ -66,13 +68,14 @@ opts.read_options(settings, "menu_osc")
 
 --------------------------------------
 -- menu_items contains multiple of menu_item
--- Menu item
+-- Menu item:
 -- {
 --   label = "string" or function, required, function for dynamic text
 --   type = "commandstr", function, or menu, optional, default to arary
 --   command = "string", function or array, required
 --   keep_open = true or false, optional, default to false, true menu will stay open
 -- },
+--
 -- Type: commandstr
 -- command: string, which run by mp.command
 -- Type: function
@@ -80,7 +83,7 @@ opts.read_options(settings, "menu_osc")
 -- Type: menu
 -- command: menu item, prefer added a go-back action, 
 --    {label="Back", type="function", command=function() moveleft() end}
--- type: missing
+-- type: default
 -- command: single array run by mp.command_native, 2d array will be run in sequenced
 --
 ---------------------------------------
