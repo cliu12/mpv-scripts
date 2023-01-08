@@ -9,10 +9,6 @@
  * - Hacky pseudo sub menus. Really, this is an ugly hack.
  * - Reasonably well behaved/integrated considering it's an external application.
  * 
- * TODO-ish:
- * - Proper sub menus (TBD protocol, tk relaunch), tooltips, other widgets (not).
- * - Possibly different menus for different bindings or states.
- *
  * Setup:
  * - Make sure Tcl/Tk is installed and `wish` is accessible and works.
  *   - Alternatively, configure `interpreter` below to `tclsh`, which may work smoother.
@@ -47,15 +43,15 @@
 function noop() end
 local prop_native = mp.get_property_native
 
-        local options = require 'mp.options'
-        local opts = {
-            save_window_position_on_exit=true,
-            x = 50,
-            y = 50,
-            width = "50%",
-            height = "50%",
-            reset=false
-        }
+local options = require 'mp.options'
+local opts = {
+    save_window_position_on_exit=true,
+    x = 50,
+    y = 50,
+    width = "50%",
+    height = "50%",
+    reset=false
+}
         
 local context_menu = {
     {function() return prop_native("pause") and "Play" or "Pause" end, "cycle pause"},
@@ -106,13 +102,11 @@ local context_menu = {
     {"Get window position", function() mp.commandv("script-message", "get_window_position") end},
     {"Save window position", function() mp.commandv("script-message", "save_window_position") end},
     {function()
-		--mp.msg.info("_G " .. tostring(_G.save_window_position_on_exit))
-		--local res, err = mp.command_native({"script-message", "get_save_window_position_on_exit"})
         options.read_options(opts, "save_last_window_rect", function (e)
             mp.msg.info("On_update 2 " .. tostring(e))
             mp.msg.info("On_update 2 " .. tostring(opts.save_window_position_on_exit))
         end)
-		return "Save: " .. tostring(opts.save_window_position_on_exit) --" " .. tostring(err)
+		return "Save pos on exit: " .. tostring(opts.save_window_position_on_exit) --" " .. tostring(err)
 	end, function() 
         mp.commandv("script-message", "toggle_save_window_position_on_exit") 
         mp.commandv("script-message", "save_window_position_conf")
@@ -146,11 +140,7 @@ local function do_menu(items, x, y)
             args[#args+1] = item[2] and tostring(i) or ""
         end
     end
-    
-    -- for k,v in pairs(args) do
-    --     mp.msg.info(k .. " - " .. v)
-    -- end
-    
+
     local ret = utils.subprocess({
         args = args,
         cancellable = true
