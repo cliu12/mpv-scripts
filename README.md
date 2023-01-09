@@ -35,7 +35,7 @@ Pause playing when minimize
 
 Save the properties on exit
 
-===
+---
 
 ## Screenshot for menu-osc
 
