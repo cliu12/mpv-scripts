@@ -34,3 +34,11 @@ Pause playing when minimize
 ## scripts\persist-properties.lua
 
 Save the properties on exit
+
+===
+
+## Screenshot for menu-osc
+
+![Screenshot 1](Menu_osc_1.png)
+![Screenshot 2](Menu_osc_2.png)
+![Screenshot 3](Menu_osc_3.png)
