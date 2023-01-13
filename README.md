@@ -1,4 +1,4 @@
-# MPV plugins
+# mpv scripts
 
 This folder contain the mpv plugins that I collected from Internet.
 Some are modified by me
