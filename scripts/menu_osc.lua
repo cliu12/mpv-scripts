@@ -28,34 +28,37 @@ local settings = {
   showamount    = 13,
   
   --font size scales by window, if false requires larger font and padding sizes
-  scale_playlist_by_window = true,
-  --playlist ass style overrides inside curly brackets, \keyvalue is one field, extra \ for escape in lua
-  --example {\\fnUbuntu\\fs10\\b0\\bord1} equals: font=Ubuntu, size=10, bold=no, border=1
-  --read http://docs.aegisub.org/3.2/ASS_Tags/ for reference of tags
-  --undeclared tags will use default osd settings
-  --these styles will be used for the whole playlist
+  scale_by_window = true,
+  
 
-  --scale_playlist_by_window=yes,
-  style_ass_tags  = "{\\fs12\\b0\\bord1}",
   text_padding_x  = 30,
   text_padding_y  = 40,
 
   curtain_opacity = 0,
   
-  --color in bbggrr
-  text_color = "BBBBBB",
-  text_border_color = "0F0F0F",
-  text_selected_color = "FF0F00",
-  text_border_selected_color = "FFB78A",
-
+  --ass style without curly brackets, \keyvalue is one field, extra \ for escape in lua
+  --\fn<name>  font name <name>
+  --\fs# font size #
+  --\b# bold 1 bold, 0 disable bold
+  --\i# Italics 1 italics,  0 disable italics
+  --\bord#  border size #
+  --\1c&Hbbggrr&  1c text color, 3c border color in hex bbggrr
+  --\alpha&H##& alpha in hex ##, 00 opaque/fully visible, FF fully transparent/invisible
+  separator_style="\\fs8\\b0\\bord0\\1c&HBBBBBB&",
+  header_style="\\fs12\\b1\\1c&H000000&\\3c&HFFFFFF&",
+  item_style="\\fs12\\b0\\bord1\\1c&HBBBBBB&\\3c&H0F0F0F&",
+  item_selected_style="\\fs12\\b1\\bord1\\1c&H000000&\\3c&HFFFFFF&",
+  menu_style="\\fs12\\b0\\i1\\bord1\\1c&HBBBBBB&\\3c&H0F0F0F&",
+  menu_selected_style="\\fs12\\b1\\i1\\bord1\\1c&H000000&\\3c&HFFFFFF&",
+  
 }
 
-local utils = require("mp.utils")
-local msg = require("mp.msg")
+local utils   = require("mp.utils")
+local msg     = require("mp.msg")
 local assdraw = require("mp.assdraw")
+local options = require("mp.options")
 local prop_native = mp.get_property_native
-local opts = require("mp.options")
-opts.read_options(settings, "menu_osc")
+options.read_options(settings, "menu_osc")
 
 --------------------------------------
 --Prefer menu stored in json, seperated file, but it has limited features,
@@ -99,22 +102,95 @@ local menu_items = {
     command = "cycle mute"
   },
   {
-    label = "Volume Up",
-    type = "commandstr",
-    command = "add volume 10",
-    keep_open = true
-  },
-  {
-    label = "Volume Down",
-    type = "commandstr",
-    command = "add volume -10",
-    keep_open = true
-  },
-  {
-    label = "Volume 100",
-    type = "commandstr",
-    command = "set volume 100",
-    keep_open = true
+    label = "Volume & Speed",
+    type = "menu",
+    command = {
+      {
+        label = "Back",
+        type = "function",
+        command = function() moveleft() end
+      },
+      {
+        label = "Volume Up",
+        type = "commandstr",
+        command = "add volume 10",
+        keep_open = true
+      },
+      {
+        label = "Volume Down",
+        type = "commandstr",
+        command = "add volume -10",
+        keep_open = true
+      },
+      {
+        label = "Volume 100%",
+        type = "commandstr",
+        command = "set volume 100"
+      },
+      {
+        label = "——————————",
+        type = "separator",
+      },
+      {
+        label = "Speed Reset",
+        type = "commandstr",
+        command = "set speed 1",
+        keep_open = true
+      },
+      {
+        label = "Speed Up",
+        type = "commandstr",
+        command = "add speed .1",
+        keep_open = true
+      },
+      {
+        label = "Speed Down",
+        type = "commandstr",
+        command = "add speed -.1",
+        keep_open = true
+      },
+      {
+        label = "Sub Menu",
+        type = "menu",
+        command = {
+          {
+            label = "Back",
+            type = "function",
+            command = function() moveleft() end
+          },
+          {
+            label = "Get window position", 
+            type = "function",
+            command = function() 
+                local rect = mp.command_native({"script-message-to", "save_last_window_rect", "get_window_position"})
+                --mp.osd_message(tostring(rect))
+                end},
+          {
+            label = "Save window position", 
+            type = "function",
+            command = function() mp.commandv("script-message-to", "save_last_window_rect", "save_window_position") end},
+          {
+            label = function()
+                local swpoe_opts = {
+                    save_window_position_on_exit=true,
+                    x = 50,
+                    y = 50,
+                    width = "50%",
+                    height = "50%",
+                    reset=false}
+                options.read_options(swpoe_opts, "save_last_window_rect")
+                --mp.msg.info("On_update 2 " .. tostring(swpoe_opts.save_window_position_on_exit) .. tostring(swpoe_opts.x) .. tostring(swpoe_opts.y))
+                return "Save pos on exit: " .. tostring(swpoe_opts.save_window_position_on_exit)
+            end, 
+            type = "function",
+            command = function() 
+                mp.command_native({"script-message-to", "save_last_window_rect", "toggle_save_window_position_on_exit"})
+                --mp.commandv("script-message-to", "save_last_window_rect", "save_window_position_conf")
+            end
+          },
+        },
+      },
+    }
   },
   {
     label = "Open File",
@@ -129,43 +205,20 @@ local menu_items = {
     command = {"script-message-to", "PSOpenFileDialog", "open-subs"},
   },
   {
-    label = "Scale: .1",
-    command = {"add", "window-scale",  ".1"},
-  },
-  {
-    label = "Scale: -.1",
-    command = {"add", "window-scale",  "-.1"}
-  },
-  {
-    label = "Scale: 1",
-    command = {"set", "window-scale",  "1"}
+    label = "——————————",
+    type = "separator",
   },
   {
     label = "Manage playlist",
-    command = {"script-binding", "showplaylist"},
+    command = {"script-message-to", "playlistmanager", "showplaylist"},
   },
   {
     label = "Sort playlist",
-    command = {"script-message", "playlistmanager", "sort"},
+    command = {"script-message-to", "playlistmanager", "sort"},
   },
   {
-    label = "Sub-menu 菜单",
-    type = "menu",
-    command = {
-      {
-        label = "Back",
-        type = "function",
-        command = function() moveleft() end
-      },
-      {
-        label = "1 Video Rotate Clockwise",
-        command = {"cycle-values", "video-rotate", "90", "180", "270", "0"},
-      },
-      {
-        label = "2 Video Rotate Counter Clockwise",
-        command = {"cycle-values", "video-rotate", "270", "180", "90", "0"},
-      },
-    },
+    label = "——————————",
+    type = "separator",
   },
   {
     label = "Audio",
@@ -180,75 +233,129 @@ local menu_items = {
         type = "function",
         command = function() moveleft() end
       },
-      {label = "cycle video-unscaled",
+      {
+        label = "Toggle Crop",
+        command = {"script-message-to", "easycrop",  "easy_crop"},
+      },
+      {
+        label = "Scale: .1",
+        command = {"add", "window-scale",  ".1"},
+      },
+      {
+        label = "Scale: -.1",
+        command = {"add", "window-scale",  "-.1"}
+      },
+      {
+        label = "Scale: 1",
+        command = {"set", "window-scale",  "1"}
+      },
+      {
+        label = "cycle video-unscaled",
         command = "cycle video-unscaled",
         type = "commandstr",
         keep_open = true},
-      {label = "cycle-values window-scale",
+      {
+        label = "cycle-values window-scale",
         command = "cycle-values window-scale 2 3 1 .5",
         type = "commandstr",
         keep_open = true
       },
-      {label = "Rotate Clockwise",
+      {
+        label = "Rotate Clockwise",
         command = "cycle-values video-rotate 90 180 270 0",
         type = "commandstr",
         keep_open = true},
-      {label = "Rotate Counter Clockwise",
+      {
+        label = "Rotate Counter Clockwise",
         command = "cycle-values video-rotate 270 180 90 0",
         type = "commandstr",
         keep_open = true},
-      {label = "add video-zoom -0.25",
+      {
+        label = "add video-zoom -0.25",
         command = "add video-zoom -0.25",
         type = "commandstr",
         keep_open = true},
-      {label = "add video-zoom 0.25",
+      {
+        label = "add video-zoom 0.25",
         command = "add video-zoom 0.25",
         type = "commandstr",
         keep_open = true},
-      {label = "add video-pan-x -0.05",
+      {
+        label = "add video-pan-x -0.05",
         command = "add video-pan-x -0.05",
         type = "commandstr",
         keep_open = true},
-      {label = "add video-pan-x 0.05",
+      {
+        label = "add video-pan-x 0.05",
         command = "add video-pan-x 0.05",
         type = "commandstr",
         keep_open = true},
-      {label = "add video-pan-y 0.05",
+      {
+        label = "add video-pan-y 0.05",
         command = "add video-pan-y 0.05",
         type = "commandstr",
         keep_open = true},
-      {label = "add video-pan-y -0.05",
+      {
+        label = "add video-pan-y -0.05",
         command = "add video-pan-y -0.05",
         type = "commandstr",
         keep_open = true},
-      {label = "Reset Pan",
+      {
+        label = "Reset Pan",
         command = "set video-zoom 0; set video-pan-x 0; set video-pan-y 0",
         type = "commandstr",
         keep_open = true},
-      {label = "Reset All",
+      {
+        label = "Reset All",
         command = "set video-unscaled no; set window-scale 1; set video-rotate 0; set video-zoom 0; set video-pan-x 0; set video-pan-y 0",
         type = "commandstr",
         keep_open = true
       },
     
+    },
+  },
+  {
+    label = "Properties",
+    type = "menu",
+    command = {
       {
-        label = "menu Test 2",
-        type = "menu",
-        command = {
-          {
-            label = "Back",
-            type = "function",
-            command = function() moveleft() end
-          },
-          {
-            label = "3 Video Rotate Clockwise",
-            command = {"cycle-values", "video-rotate", "90", "180", "270", "0"},
-          },
-          {
-            label = "4 Video Rotate Counter Clockwise",
-            command = {"cycle-values", "video-rotate", "270", "180", "90", "0"},
-          },
-        },
+        label = "Back",
+        type = "function",
+        command = function() moveleft() end
+      },
+      {
+        label = "playlist",
+        type = "commandstr",
+        command = 'show-text "${playlist}"'
+      },
+      {
+        label = "hwdec-current",
+        type = "function",
+        command = function() mp.osd_message(prop_native("hwdec-current")) end
+      },
+      {
+        label = "Scale",
+        type = "function",
+        command = function() mp.osd_message(tostring(prop_native("scale"))) end
+      },
+      {
+        label = "Volume",
+        type = "function",
+        command = function() mp.osd_message(tostring(prop_native("volume"))) end
+      },
+      {
+        label = "ffmpeg-version",
+        type = "function",
+        command = function() mp.osd_message(tostring(prop_native("ffmpeg-version"))) end
+      },
+      {
+        label = "mpv-version",
+        type = "function",
+        command = function() mp.osd_message(tostring(prop_native("mpv-version"))) end
+      },
+      {
+        label = "osd",
+        command = {"show-text", '"${playlist}"'}
       },
     },
   },
@@ -256,6 +363,10 @@ local menu_items = {
     label = "Version",
     type = "function",
     command = function() mp.osd_message(prop_native("mpv-version") .. "\n" .. prop_native("ffmpeg-version"),5) end,
+  },
+  {
+    label = "——————————",
+    type = "separator",
   },
   {
     label = "Quit",
@@ -266,12 +377,13 @@ local menu_items = {
 ----------------------------
 --Todo: check menu_items format
 --
+--if #menu_items == 0 then
+--  msg.warn("Menu list is empty. The script is disabled.")
+--  return
+--end
+--
 ----------------------------
 
-if #menu_items == 0 then
-  msg.warn("Menu list is empty. The script is disabled.")
-  return
-end
 
 local menu = {}
 local menulastpos = {}
@@ -292,6 +404,7 @@ function execute()
     command()
   elseif (menu[level][cursor].type == "commandstr") then
     mp.command(command)
+  elseif (menu[level][cursor].type == "separator") then
   elseif (menu[level][cursor].type == "menu") then
     menulastpos[level] = cursor
     level = level + 1
@@ -340,9 +453,9 @@ function render()
   ass:draw_stop()
   ass:new_event()
 	
-  ass:append(settings.style_ass_tags)
-
   ass:pos(settings.text_padding_x, settings.text_padding_y)
+  ass:append("{\\rDefault" .. settings.header_style .. "}")
+
 
   local menu_len = #(menu[level])
   local start = cursor - math.floor(settings.showamount/2)
@@ -355,8 +468,8 @@ function render()
     showall=true
   end
   if start > math.max(menu_len-settings.showamount+1, 1) then
-    start=menu_len-settings.showamount+1
-    showrest=true
+    start = menu_len-settings.showamount+1
+    showrest = true
   end
   
   if level == 1 then 
@@ -366,7 +479,11 @@ function render()
       menu[level-1][menulastpos[level-1]].label or menu[level-1][menulastpos[level-1]].label()
     ass:append("" .. labelparent .. "\\N") 
   end
-  if start > 1 and not showall then ass:append("{\\1c&H" .. settings.text_color .. "&\\3c&H" .. settings.text_border_color .. "&}..." .. "\\N") end
+  if start > 1 and not showall then 
+    ass:append("{\\rDefault" .. settings.item_style .. "}...\\N")
+  else
+    ass:append(" \\N")
+  end
   
   for index=start, start+settings.showamount-1, 1 do
     if index == menu_len+1 then break end
@@ -375,42 +492,51 @@ function render()
     if (selected ) then
       if (menu[level][index].type == "menu") then
         if (level > 1) then
-          prefix = "{\\1c&H" .. settings.text_selected_color .. "&\\3c&H" .. settings.text_border_selected_color .. "&}⮜ ⮞ " --◆
+          prefix = "{\\rDefault" .. settings.menu_selected_style .. "}⮜⮞ " --◆◌▶▷▸▹►▻◀◁◂◃◄◅◆◇
         else
-          prefix = "{\\1c&H" .. settings.text_selected_color .. "&\\3c&H" .. settings.text_border_selected_color .. "&}⮞ "  --➤
+          prefix = "{\\rDefault" .. settings.menu_selected_style .. "}⮞ "  --➤
         end
       else
-        prefix = "{\\1c&H" .. settings.text_selected_color .. "&\\3c&H" .. settings.text_border_selected_color .. "&}● "  --⧑
+          prefix = "{\\rDefault" .. settings.item_selected_style .. "}● "  --⧑◀▶◁▷▸▹◄►▻◂◃◅◆◇
       end
     else
       if (level > 1) then
         if (menu[level][index].type == "menu") then
-          prefix = "{\\1c&H" .. settings.text_color .. "&\\3c&H" .. settings.text_border_color .. "&}<> " --◇
+          prefix = "{\\rDefault" .. settings.menu_style .. "}<> " --◇◁▷
         else
-          prefix = "{\\1c&H" .. settings.text_color .. "&\\3c&H" .. settings.text_border_color .. "&}< "
+          if menu[level][index].type == "separator" then
+            prefix = "{\\rDefault" .. settings.separator_style .. "}◌ "  --⧑
+          else
+            prefix = "{\\rDefault" .. settings.item_style .. "}< "     -- ◁
+          end
         end
       else
         if (menu[level][index].type == "menu") then
-          prefix = "{\\1c&H" .. settings.text_color .. "&\\3c&H" .. settings.text_border_color .. "&}> "
+          prefix = "{\\rDefault" .. settings.menu_style .. "}> "  --▷
         else
-          prefix = "{\\1c&H" .. settings.text_color .. "&\\3c&H" .. settings.text_border_color .. "&}○ "
+          if menu[level][index].type == "separator" then
+            prefix = "{\\rDefault" .. settings.separator_style .. "}◌ "
+          else
+            prefix = "{\\rDefault" .. settings.item_style .. "}○ " --◌▶▸▹►▻◀◂◃◄◅◆◇
+            --prefix = "{\\1c&H" .. settings.text_color .. "&\\3c&H" .. settings.text_border_color .. "&}○ "
+          end
         end
       end
     end
     
     local label = (type(menu[level][index].label) == "string") and 
-      menu[level][index].label or menu[level][index].label()
+        menu[level][index].label or menu[level][index].label()
     ass:append(prefix .. label .. "\\N")
+    --if menu[level][index].type == "separator" then
+    --  ass:append(settings.style_ass_tags)
+    --end
     
     if index == start+settings.showamount-1 and not showall and not showrest then
-      ass:append("...")
+      ass:append("{\\rDefault" .. settings.item_style .. "}...")
     end
   end
 
-  local _, _, a = mp.get_osd_size()
-  local h = 360
-  local w = h * a
-  if settings.scale_playlist_by_window then w,h = 0, 0 end
+  if settings.scale_by_window then w,h = 0, 0 end
   mp.set_osd_ass(w, h, ass.text)
 
   menu_visible = true
@@ -425,6 +551,13 @@ function moveup()
   elseif settings.loop_cursor then
     cursor = #(menu[level])
   end
+  if menu[level][cursor].type == "separator" then
+    if cursor ~= 1 then
+      cursor = cursor - 1
+    elseif settings.loop_cursor then
+      cursor = #(menu[level])
+    end
+  end
   render()
 end
 
@@ -433,6 +566,13 @@ function movedown()
     cursor = cursor + 1
   elseif settings.loop_cursor then
     cursor = 1
+  end
+  if menu[level][cursor].type == "separator" then
+    if cursor ~= #(menu[level]) then
+      cursor = cursor + 1
+    elseif settings.loop_cursor then
+      cursor = 1
+    end
   end
   render()
 end
@@ -509,5 +649,5 @@ keybindstimer:kill()
 
 if menu[level] and menu_size > 0 then
   mp.register_script_message("menu_osc-toggle", toggle_menu)
-  mp.add_key_binding("MBTN_MID", "menu_osc-toggle", toggle_menu)
+  mp.add_key_binding("MBTN_RIGHT", "menu_osc-toggle", toggle_menu)
 end

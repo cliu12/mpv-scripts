@@ -113,6 +113,8 @@ $Size.y = $ClientRect.Bottom
     mp.msg.debug(opts.width)
     mp.msg.debug(opts.height)
     
+    mp.osd_message("Window's position: " .. tostring(opts.width) .. "x" .. tostring(opts.height) .. ", " 
+        .. tostring(opts.x) .. "+" .. tostring(opts.y))
 end
 
 
@@ -142,7 +144,7 @@ function save_conf()
 end
 
 function toggle_save_window_position_on_exit(opt)
-    mp.msg.info("toggle " .. tostring(opt))
+    --mp.msg.info("toggle save_window_position_on_exit: " .. tostring(opt))
     if (opt == nil) then
         opts.save_window_position_on_exit = not opts.save_window_position_on_exit
     elseif ( type(opt) == 'boolean' ) then
@@ -154,13 +156,18 @@ function toggle_save_window_position_on_exit(opt)
     else 
         opts.save_window_position_on_exit = true
     end
-    mp.msg.info("toggle " .. tostring(opts.save_window_position_on_exit))
+    
+    mp.msg.info("toggle save_window_position_on_exit: " .. tostring(opts.save_window_position_on_exit))
+    mp.osd_message("Save window's position on exit: " .. tostring(opts.save_window_position_on_exit))
+    
+    save_conf()
     return opts.save_window_position_on_exit
 end
 
 function get_save_window_position_on_exit()
     mp.msg.info("opt " .. tostring(opts.save_window_position_on_exit))
-    _G.save_window_position_on_exit = opts.save_window_position_on_exit
+    mp.osd_message("Save_window_position_on_exit: " .. tostring(opts.save_window_position_on_exit))
+    -- _G.save_window_position_on_exit = opts.save_window_position_on_exit
     return opts.save_window_position_on_exit
 end
 
