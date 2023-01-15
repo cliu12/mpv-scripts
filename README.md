@@ -1,23 +1,14 @@
 # mpv scripts
 
-This folder contain the mpv plugins that I collected from Internet.
-Some are modified by me
+This folder contains mpv scripts.  Some are collected from Internet. Some are modified or re-written by me.
 
 ## scripts\menu-osc.lua
 
-An on screen menu
-
-## scripts\PSOpenFileDialog.lua
-
-An open file dialog by Powershell and .Net Framework
-
-## scripts\save_last_window_rect.lua
-
-Save the windows position on exit by Powershell with user32.dll
+An on screen menu using osc, bring up by right click and execute the command by middle click.  Screenshot at below.  
 
 ## scripts\SmartCopyPaste.lua
 
-Copy and paste function by Powershell
+Copy and paste function
 
 ## scripts\playlistmanager.lua
 
@@ -34,6 +25,14 @@ Pause playing when minimize
 ## scripts\persist-properties.lua
 
 Save the properties on exit
+
+## scripts\PSOpenFileDialog.lua
+
+An open file dialog by Powershell and .Net Framework
+
+## scripts\save_last_window_rect.lua
+
+Save the windows position on exit by Powershell with user32.dll
 
 ---
 
