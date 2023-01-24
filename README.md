@@ -1,10 +1,10 @@
 # mpv scripts
 
-This folder contains mpv scripts.  Some are collected from Internet. Some are modified or re-written by me.
+This folder contains mpv scripts and config that I used.  Some are collected from Internet. Some are modified or re-written by me.
 
-## scripts\menu-osc.lua
+## scripts\menu_osc.lua
 
-An on screen menu using osc, bring up by right click and execute the command by middle click.  Screenshot at below.  
+An on screen menu using osc, bring up and navigate by mouse, right click and execute the command by middle click.  Screenshots at below.  
 
 ## scripts\SmartCopyPaste.lua
 
